@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title></title>
+		<style type="text/css">
+			*{
+				margin: 0;
+				padding: 0;
+				list-style: none;
+			}
+			ul{
+				width: 640px;
+				margin: 100px auto;
+				position: relative;
+				
+			}
+			ul li{
+				display:inline-block;
+				float: left;
+				width: 200px;
+				height: 150px;
+				margin-right: 10px;
+				margin-bottom: 10px;
+				border: 1px dashed transparent;
+			
+			}
+			ul li:nth-child(3n){
+				margin-right: 0;
+			}
+			
+			ul .cur{
+            border: 1px dashed red;
+        }
+
+		</style>
+	</head>
+	<body>
+		<ul>
+			<li class=""><img src="img/1.jpg"/></li>
+			<li><img src="img/2.jpg"/></li>
+			<li><img src="img/3.jpg"/></li>
+			<li><img src="img/4.jpg"/></li>
+			<li><img src="img/5.jpg"/></li>
+			<li><img src="img/1.jpg"/></li>
+			<li><img src="img/2.jpg"/></li>
+			<li><img src="img/3.jpg"/></li>
+			
+			<li><img src="img/4.jpg"/></li>
+		</ul>
+	</body>
+</html>
+
+
+<script type="text/javascript">
+	var aLi=document.querySelectorAll("ul li")
+	var aPos=[]
+	var ZIndex=2
+	
+	//兼容性
+	function getStyle(obj,attr){
+		if(obj.currentStyle){
+			return obj.currentStyle[attr]
+		}
+		else{
+			return getComputedStyle(obj,null)[attr]
+		}
+	}
+	function run(obj,json,fn){
+		clearInterval(obj.timer)
+		obj.timer=setInterval(function(){
+			var off=true
+			for( var attr in json){
+				var current=parseInt(getStyle(obj,attr))
+				speed=(json[attr]-current)/10;
+				speed=speed>0 ? Math.ceil(speed) : Math.floor(speed)
+				if(attr == "opacity" || attr =="zIndex"){
+					obj.style[attr]=json[attr]
+				}else{
+					obj.style[attr]=current+speed+"px"
+				}
+				
+				if(json[attr]!=current){
+					off=false;
+					
+				}
+			}
+			if(off){
+				clearInterval(obj.timer)
+//				
+				if(fn){
+//					alert()
+					fn();
+				}
+			}
+			
+		},30)
+	}
+	
+	
+	
+	
+	for(var i=0;i<aLi.length;i++){
+		aPos[i]={
+		    left:aLi[i].offsetLeft,
+			top:aLi[i].offsetTop
+		}
+	}
+	for(var i=0;i<aLi.length;i++){
+		aLi[i].style.position="absolute"
+		aLi[i].style.left=aPos[i].left+"px"
+		aLi[i].style.top=aPos[i].top+"px"
+		
+		
+		aLi[i].index=i
+	}
+	
+	
+	for(var i=0;i<aLi.length;i++){
+		get(aLi[i])
+	}
+	function get(obj){
+		clearInterval(obj.timer)
+		obj.onmousedown=function(ev){
+			var oEvent=ev || event
+			ZIndex++
+			var X=oEvent.clientX-obj.offsetLeft
+			var Y=oEvent.clientY-obj.offsetTop
+			document.onmousemove=function(ev){
+				var oEvent=ev || event
+				obj.style.left=oEvent.clientX-X+"px"
+				obj.style.top=oEvent.clientY-Y+"px"
+				obj.style.zIndex=ZIndex
+				
+				for(var i=0;i<aLi.length;i++){
+					aLi[i].className=""
+//					if(obj == aLi[i]) continue;
+//					if(cdTect(obj,aLi[i])){
+//						console.log(i)
+//						aLi[i].className="cur"
+					}
+				var oNear=findNear(obj)
+				if(oNear){
+					oNear.className="cur"
+				}
+//				}
+			}
+			document.onmouseup=function(){
+				document.onmousemove=null
+				var oNear=findNear(obj)
+				if(oNear){
+					oNear.style.zIndex=ZIndex++
+					obj.style.zIndex=ZIndex++
+					run(obj,aPos[oNear.index])
+					run(oNear,aPos[obj.index])
+					
+					var tmp=0;
+					
+					tmp=obj.index;
+					obj.index=oNear.index;
+					oNear.index=tmp;
+
+					oNear.className=""
+				}else{
+					run(obj,aPos[obj.index])
+				}
+				
+			}
+			clearInterval(obj.timer)
+			return false;
+		}
+	}
+	
+	
+	function cdTect(obj1,obj2){
+		var l1=obj1.offsetWidth + obj1.offsetLeft
+		var r1=obj1.offsetLeft
+		var t1=obj1.offsetTop + obj1.offsetHeight
+		var b1=obj1.offsetTop
+		
+		var l2=obj2.offsetWidth + obj2.offsetLeft
+		var r2=obj2.offsetLeft
+		var t2=obj2.offsetTop + obj2.offsetHeight
+		var b2=obj2.offsetTop
+		
+		
+		if(l1<r2 || l2<r1 || t1<b2 || b1>t2){
+			return false
+		}else{
+			return true
+		}
+		
+	}
+	
+	function Dis(obj1,obj2){
+		var a=obj1.offsetLeft-obj2.offsetLeft
+		var b=obj1.offsetTop-obj2.offsetTop
+		return Math.sqrt(a*a+b*b)
+	}
+	function findNear(obj){
+		var Min=99999999;
+		var Mindex=-1;
+		for(var i=0;i<aLi.length;i++){
+//			aLi[i].className=""
+			if(obj == aLi[i]) continue;
+			if(cdTect(obj,aLi[i])){
+//				console.log(i)
+//				aLi[i].className="cur"
+				var dis=Dis(obj,aLi[i])
+				if(Min>dis){
+					Min=dis;
+					Mindex=i
+				}
+			}
+		}
+		if(Mindex == -1){
+			return null
+		}
+		else{
+			return aLi[Mindex]
+		}
+		
+	}
+</script>
